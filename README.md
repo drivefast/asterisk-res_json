@@ -47,7 +47,7 @@ __res_json__ module (git must be installed on your machine):
 (3) we now need to move the source files to their appropriate places in the asterisk directory. a 
 shell script was provided for that, so run `./asterisk-res_json/install.sh`
 
-(4) edit the file main/asterisk.exports.in and add the following line next to the similar ones:
+(4) edit the file `main/asterisk.exports.in` and add the following line next to the similar ones:
 
 `LINKER_SYMBOL_PREFIXcJSON_*;`
 
