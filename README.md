@@ -49,7 +49,7 @@ shell script was provided for that, so run `./asterisk-res_json/install.sh`
 
 (4) edit the file main/asterisk.exports.in and add the following line next to the similar ones:
 
-   LINKER_SYMBOL_PREFIXcJSON_*;
+`LINKER_SYMBOL_PREFIXcJSON_*;`
 
 (5) only now proceed with building asterisk (`./configure; make menuconfig; make; make install`). 
 if you already built asterisk from source in this directory, you may need to run `./bootstrap.sh` 
