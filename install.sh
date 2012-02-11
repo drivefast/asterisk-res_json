@@ -1,4 +1,4 @@
-if [ -s include/asterisk.h ] ; then
+if [ ! -s include/asterisk.h ] ; then
 	echo "please cd into the directory where the asterisk source has been untarred\n"
 	exit
 fi
