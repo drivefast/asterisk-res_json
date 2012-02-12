@@ -200,7 +200,7 @@ apps and functions
 >
 >   _newvalue_: value to be set
    
-- `jsonset(doc,path)`
+- `jsondelete(doc,path)`
 
 >delete the element at the given path, from the given document. the value of the variable that 
 >contains the json document (_doc_)is updated to reflect the change. you may delete any type of 
