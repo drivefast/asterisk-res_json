@@ -73,14 +73,23 @@ a bunch of apps and functions:
 none of the functions or the apps above would fail in such a way that would terminate the call. if 
 any of them would need to return an abnormal result, they would do so by setting the value of a 
 dialplan variable called `JSONRESULT`. these values are:
+
 * `ASTJSON_OK` (0) - the operation was successful
+
 * `ASTJSON_UNDECIDED` (1) - the operation was aborted mid-way and the results are not guaranteed
+
 * `ASTJSON_ARG_NEEDED` (2) - missing or invalid argument type
+
 * `ASTJSON_PARSE_ERROR` (3) - the string that was supposed to be a json document could not be parsed
+
 * `ASTJSON_NOTFOUND` (4) - the expected element could not be found at the given path
+
 * `ASTJSON_INVALID_TYPE` (5) - invalid element type for a jsonadd or jsonset operation
+
 * `ASTJSON_ADD_FAILED` (6) - the jsonadd operation failed
+
 * `ASTJSON_SET_FAILED` (7) - the jsonset operation failed
+
 * `ASTJSON_DELETE_FAILED` (8) - the jsondelete operation failed
 
 __IMPORTANT NOTE__ all the functions and apps expect **the name** of a dialplan variable containing 
