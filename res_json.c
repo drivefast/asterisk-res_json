@@ -316,7 +316,7 @@ static int jsoncompress_exec(struct ast_channel *chan,
 		json_set_operation_result(chan, ASTJSON_PARSE_ERROR);
 		return 0;
 	}
-	char *unpretty = cJSON_Print(doc);
+	char *unpretty = cJSON_PrintUnformatted(doc);
 	ast_copy_string(buffer, unpretty, buflen);
 	cJSON_Delete(doc);
 	free(unpretty);
@@ -408,7 +408,7 @@ static int jsonelement_exec(struct ast_channel *chan,
 			ast_copy_string(buffer, cJSON_PrintUnformatted(thisobject), buflen); 
 			break;
 		case cJSON_Object: 
-			type = ast_strdupa("object"); 
+			type = ast_strdupa("node"); 
 			ast_copy_string(buffer, cJSON_PrintUnformatted(thisobject), buflen); 
 			break;
 	}
@@ -451,7 +451,7 @@ static int jsonvariables_exec(struct ast_channel *chan, const char *data) {
 		return 0;
 	}
 	// parse json
-	cJSON *doc = cJSON_Parse(args.json);
+	cJSON *doc = cJSON_Parse(pbx_builtin_getvar_helper(chan, args.json));
 	if (!doc) {
 		ast_log(LOG_WARNING, "source json parsing error\n");
 		json_set_operation_result(chan, ASTJSON_PARSE_ERROR);
@@ -499,7 +499,7 @@ static int jsonadd_exec(struct ast_channel *chan, const char *data) {
 // the value parameter is ignored for null and array types; boolean false are represented by an 
 //    empty string, 0, n, no, f or false (case insensitive) - anything else is considered true
 // if the element at the path is an array, append to the array (in this case the name is ignored)
-// rewrite the contents of the variable that contains the json source and set an error code variable
+// rewrite the contents of the variable that contains the json doc and set an error code variable
 
 	json_set_operation_result(chan, ASTJSON_UNDECIDED);
 
@@ -539,7 +539,8 @@ static int jsonadd_exec(struct ast_channel *chan, const char *data) {
 		// get the element type
 		if (strcasecmp(args.type, "bool") == 0)
 			newobject = (
-				(strlen(args.value) == 0) || (strcasecmp(args.value, "0") == 0) ||
+				(args.value == 0) || (strlen(args.value) == 0) || 
+				(strcasecmp(args.value, "0") == 0) ||
 				(strcasecmp(args.value, "no") == 0) || (strcasecmp(args.value, "n") == 0) ||
 				(strcasecmp(args.value, "false") == 0) || (strcasecmp(args.value, "f") == 0) 
 			) ? cJSON_CreateFalse() : cJSON_CreateTrue();
@@ -551,38 +552,38 @@ static int jsonadd_exec(struct ast_channel *chan, const char *data) {
 			newobject = cJSON_CreateString(args.value);
 		else if (strcasecmp(args.type, "array") == 0)
 			newobject = cJSON_CreateArray();
+		else if (strcasecmp(args.type, "node") == 0)
+			newobject = cJSON_CreateObject();
 		else {
 			ast_log(LOG_WARNING, "invalid element type '%s'; need bool, null, number, string or array\n", args.type);
 			json_set_operation_result(chan, ASTJSON_ARG_NEEDED);
 			return 0;
 		}
 	}
-	// parse source
-	cJSON *doc;
-	const char *source = pbx_builtin_getvar_helper(chan, args.json);
-	if (strlen(source)) {
-		doc = cJSON_Parse(source);
+	// parse document
+	int ret = ASTJSON_NOTFOUND;
+	cJSON *doc; char *thispath;
+	const char *jsondoc = pbx_builtin_getvar_helper(chan, args.json);
+	if ((jsondoc == 0) || (strlen(jsondoc) == 0)) {
+		// variable containing document is missing or empty string, 
+		// it needs to be initialized as either {} or []
+		doc = (ast_strlen_zero(args.name)) ? cJSON_CreateArray() : cJSON_CreateObject();
+		thispath = "\0";
+	} else {
+		doc = cJSON_Parse(jsondoc);
 		if (!doc) {
-			ast_log(LOG_WARNING, "source json parsing error\n");
+			ast_log(LOG_WARNING, "json document parsing error\n");
 			cJSON_Delete(newobject);
 			json_set_operation_result(chan, ASTJSON_PARSE_ERROR);
 			return 0;
 		}
-	} else {
-		// empty source, which means the object we created is the json itself
-		char *jsonresult = cJSON_PrintUnformatted(newobject);
-		pbx_builtin_setvar_helper(chan, args.json, jsonresult);
-		free(jsonresult);
-		cJSON_Delete(newobject);
-		json_set_operation_result(chan, ASTJSON_OK);
-		return 0;
+		thispath = ast_strdupa((char *)(args.path + ((args.path[0] == '/') ? 1 : 0)));
+		if (thispath[strlen(thispath) - 1] == '/') thispath[strlen(thispath) - 1] = 0;
 	}
 	// go over the path
-	int ret = ASTJSON_NOTFOUND;
-	char *thispath = ast_strdupa((char *)(args.path + ((args.path[0] == '/') ? 1 : 0)));
-	if (thispath[strlen(thispath) - 1] == '/') thispath[strlen(thispath) - 1] = 0;
 	if (strlen(thispath) == 0) {
 		// no path - add to the json root
+		ast_log(LOG_DEBUG, "no path, adding to root of doc which is type %d\n", doc->type);
 		switch (doc->type) {
 		case cJSON_Array:
 			cJSON_AddItemToArray(doc, newobject);
@@ -601,15 +602,18 @@ static int jsonadd_exec(struct ast_channel *chan, const char *data) {
 		int ixarray;
 		char *pathpiece = strsep(&thispath, "/");
 		while (pathpiece) {
+			ast_log(LOG_DEBUG, "on element %s... ", pathpiece);			
 			// determine if we have an object with the given name or index
 			if (sscanf(pathpiece, "%3d", &ixarray) == 1)
 				nextobject = cJSON_GetArrayItem(thisobject, ixarray);
 			else
 				nextobject = cJSON_GetObjectItem(thisobject, pathpiece);
 			if (nextobject == NULL) break; // path element not found
+			ast_log(LOG_DEBUG, "object is:\n%s\n", cJSON_PrintUnformatted(nextobject));			
 			pathpiece = strsep(&thispath, "/");
 			if (pathpiece == NULL) {
 				// done going down the path, add object here
+				ast_log(LOG_DEBUG, "adding to type %d\n", nextobject->type);
 				switch (nextobject->type) {
 				case cJSON_Array:
 					cJSON_AddItemToArray(nextobject, newobject);
@@ -633,6 +637,7 @@ static int jsonadd_exec(struct ast_channel *chan, const char *data) {
 	if (ret == ASTJSON_OK)
 		pbx_builtin_setvar_helper(chan, args.json, jsonresult);
 	// cleanup the mess and let's get outta here
+	ast_log(LOG_DEBUG, "resulting json: %s\n", jsonresult);
 	free(jsonresult);
 	cJSON_Delete(doc);
 	json_set_operation_result(chan, ret);
@@ -716,7 +721,8 @@ static int jsonset_exec(struct ast_channel *chan, const char *data) {
 			case cJSON_False:
 			case cJSON_True:
 				newobject = (
-					(strlen(args.value) == 0) || (strcasecmp(args.value, "0") == 0) ||
+					(args.value == 0) || (strlen(args.value) == 0) || 
+					(strcasecmp(args.value, "0") == 0) ||
 					(strcasecmp(args.value, "no") == 0) || (strcasecmp(args.value, "n") == 0) ||
 					(strcasecmp(args.value, "false") == 0) || (strcasecmp(args.value, "f") == 0) 
 				) ? cJSON_CreateFalse() : cJSON_CreateTrue();

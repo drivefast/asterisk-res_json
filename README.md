@@ -126,7 +126,7 @@ apps and functions
 >
 >   Array => returned value is a json representation of an array; `JSONTYPE` is `array`
 >
->   Object => returned value is a json representation of the underlying object; `JSONTYPE` is `object`
+>   Object => returned value is a json representation of the underlying object; `JSONTYPE` is `node`
 >
 >parameters:
 >
@@ -162,8 +162,8 @@ apps and functions
 
 >adds an element to the json document at the given path. the value of the variable that contains the 
 >json document is updated to reflect the change. the element to be added has a type (_elemtype_), a 
->_name_, and a _value_. _elemtype_ can be one of `bool`, `null`, `number`, `string` or `array`. a 
->`bool` "false" value is represented as either an empty string, `0`, `n`, `no`, `f` or `false` (case 
+>_name_, and a _value_. _elemtype_ can be one of `bool`, `null`, `number`, `string`, `node` or `array`. 
+>a `bool` "false" value is represented as either an empty string, `0`, `n`, `no`, `f` or `false` (case 
 >insensitive); any other value for a `bool` _elemtype_ is interpreted as true. for a `null` _elemtype_, 
 >the _value_ paramenter is ignored. the _value_ parameter is also ignored for an `array` _elemtype_: 
 >in this case, and an empty array is created. further on, you may append elements to this array using 
@@ -183,7 +183,7 @@ apps and functions
 >  _path_: path to the element to which we're adding (like `/path/to/element`, or `/path/to/element/3` 
 >to identify the element with index 3 in an array)
 >
->  _elemtype_: element type, one of `bool`, `null`, `number`, `string` or `array`
+>  _elemtype_: element type, one of `bool`, `null`, `number`, `string`, `node` or `array`
 >
 >  _name_: the name of the element to be added (may be missing if adding elements to an array)
 >
