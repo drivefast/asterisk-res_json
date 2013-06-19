@@ -45,7 +45,12 @@ __res_json__ module (git must be installed on your machine):
 `git clone git://github.com/drivefast/asterisk-res_json.git`
 
 (3) we now need to move the source files to their appropriate places in the asterisk directory. a 
-shell script was provided for that, so run `./asterisk-res_json/install.sh`
+shell script was provided for that, so run `./asterisk-res_json/install.sh`. After it runs, you need 
+to manually edit `addons/Makefile` (sorry about that, but i really don't have a better solution):
+- add `res_json` to the `ALL_C_MODS` macro 
+- explicitely tell the linker to add the res_json symbols by adding a line like 
+
+`res_json.so: cJSON.o res_json.o`
 
 (4) edit the file `main/asterisk.exports.in` and add the following line next to the similar ones:
 
