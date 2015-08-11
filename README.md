@@ -106,8 +106,8 @@ the variable named `json`, we would call the function and execute an app using `
 
 and __!!NOT!!__ the contents of the json variable, like in:
 
-   exten => s,n,set(el=${JSONELEMENT(${json},path/to/elem)})  ;; WRONG
-   exten => s,n,jsonset(${json},path/to/elem,123)             ;; WRONG
+    exten => s,n,set(el=${JSONELEMENT(${json},path/to/elem)})  ;; WRONG
+    exten => s,n,jsonset(${json},path/to/elem,123)             ;; WRONG
 
 the decision on this type of usage was made because, typically, the json representations contain a 
 lot of commas. escaping the json content such that the arguments are parsed correctly becomes 
