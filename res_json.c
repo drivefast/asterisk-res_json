@@ -11,7 +11,7 @@
  * the project provides a web site, mailing lists and IRC
  * channels for your use.
  *
- * This program is ast_free software, distributed under the terms of
+ * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
  *
