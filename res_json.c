@@ -39,17 +39,16 @@
 	<support_level>core</support_level>
  ***/
 
-#include "asterisk.h"
+#include <asterisk.h>
 
+#include <asterisk/file.h>
+#include <asterisk/channel.h>
+#include <asterisk/pbx.h>
+#include <asterisk/module.h>
+#include <asterisk/app.h>
+#include <asterisk/utils.h>
 
-
-#include "asterisk/file.h"
-#include "asterisk/channel.h"
-#include "asterisk/pbx.h"
-#include "asterisk/module.h"
-#include "asterisk/app.h"
-#include "asterisk/utils.h"
-#include "asterisk/cJSON.h"
+#include "cJSON.h"
 
 /*** DOCUMENTATION
 	<function name="JSONPRETTY" language="en_US">
