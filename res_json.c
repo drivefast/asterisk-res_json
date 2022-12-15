@@ -53,7 +53,7 @@
 
 /*** DOCUMENTATION
 	<function name="JSONPRETTY" language="en_US">
-		<synopsis>
+	on_v<synopsis>
 			nicely formats a json string for printing
 		</synopsis>	
 		<syntax>
@@ -438,9 +438,10 @@ static int jsonvariables_exec(struct ast_channel *chan, const char *data) {
 	char *argcopy;
 	AST_DECLARE_APP_ARGS(args,
 		AST_APP_ARG(json);
+		AST_APP_ARG(varprefix);
 	);
 	if (ast_strlen_zero(data)) {
-		ast_log(LOG_WARNING, "jsonvariables requires arguments (jsonsource)\n");
+		ast_log(LOG_WARNING, "jsonvariables requires arguments (jsonsource,varprefix)\n");
 		json_set_operation_result(chan, ASTJSON_ARG_NEEDED);
 		return 0;
 	}
@@ -458,28 +459,44 @@ static int jsonvariables_exec(struct ast_channel *chan, const char *data) {
 		json_set_operation_result(chan, ASTJSON_PARSE_ERROR);
 		return 0;
 	}
+
+	char *varname;
+	if (args.varprefix) {
+		ast_log(LOG_NOTICE, "varprefix is set to '%s'\n",args.varprefix);
+	}
+
 	// for each element
 	cJSON *nvp = doc->child;
 	char *num = NULL; char *eljson = NULL;
 	while (nvp) {
 		if (strlen(nvp->string)) {
+			if (args.varprefix) {
+				strcpy(varname,args.varprefix);
+				strcat(varname,"_");
+				strcat(varname,nvp->string);
+			} else {
+				varname=nvp->string;
+			}
+
+			ast_log(LOG_NOTICE, "setting var '%s'\n",varname);
 			switch (nvp->type) {
-				case cJSON_False: pbx_builtin_setvar_helper(chan, nvp->string, "0"); break;
-				case cJSON_True: pbx_builtin_setvar_helper(chan, nvp->string, "1"); break;
-				case cJSON_NULL: pbx_builtin_setvar_helper(chan, nvp->string, ""); break;
+				case cJSON_False: pbx_builtin_setvar_helper(chan, varname, "0"); break;
+				case cJSON_True: pbx_builtin_setvar_helper(chan, varname, "1"); break;
+				case cJSON_NULL: pbx_builtin_setvar_helper(chan, varname, ""); break;
 				case cJSON_Number:
 					if (nvp->valuedouble > nvp->valueint)
 						ast_asprintf(&num, "%f", nvp->valuedouble); 
 					else
 						ast_asprintf(&num, "%d", nvp->valueint); 
-					pbx_builtin_setvar_helper(chan, nvp->string, num); 
+					pbx_builtin_setvar_helper(chan, varname, num); 
 					ast_free(num);
 					break;
-				case cJSON_String: pbx_builtin_setvar_helper(chan, nvp->string, nvp->valuestring); break;
-				case cJSON_Array: pbx_builtin_setvar_helper(chan, nvp->string, "!array!"); break;
+				case cJSON_String: pbx_builtin_setvar_helper(chan, varname, nvp->valuestring); break;
+				case cJSON_Array: pbx_builtin_setvar_helper(chan, varname, "!array!"); break;
 				case cJSON_Object: 
 					eljson = cJSON_PrintUnformatted(nvp);
-					pbx_builtin_setvar_helper(chan, nvp->string, eljson); 
+					ast_log(LOG_WARNING,"string = %s\n",nvp->string);
+					pbx_builtin_setvar_helper(chan, varname, eljson); 
 					ast_free(eljson);
 					break;
 				default: 
