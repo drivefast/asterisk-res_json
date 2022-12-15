@@ -68,7 +68,7 @@ what'd you get
 a bunch of apps and functions:
 
 - `JSONELEMENT(doc,path)` (r/o function) - gets the value of an element at a given path in a json document
-- `jsonvariables(doc)` (app) - reads a single level json document (dictionary) into dialplan variables
+- `jsonvariables(doc,varprefix)` (app) - reads a single level json document (dictionary) into dialplan variables
 - `jsonadd(doc,path,elemtype,name,value)` (app) - adds an element to the json document at the given path
 - `jsonset(doc,path,newvalue)` (app) - changes the value of an element in the json document
 - `jsondelete(doc,path)` (app) - deletes an element in the json document
